@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票筛选器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .filter-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>股票筛选器</h1>
+        
+        <div class="filter-section">
+            <div class="filter-title">股票类型</div>
+            <div>
+                <input type="checkbox" id="a_share" checked> <label for="a_share">A股</label>
+                <input type="checkbox" id="hk_stock" disabled> <label for="hk_stock" style="color: #999;">港股 (暂不支持)</label>
+                <input type="checkbox" id="etf" disabled> <label for="etf" style="color: #999;">ETF (暂不支持)</label>
+            </div>
+            <small style="color: #666; display: block; margin-top: 5px;">注：当前数据源仅支持A股筛选，港股和ETF功能正在开发中</small>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-title">移动平均线(MA)筛选</div>
+            <div>
+                <label for="ma_days">MA天数:</label>
+                <input type="number" id="ma_days" min="5" max="250" value="20">
+                
+                <label for="ma_condition">股价与MA关系:</label>
+                <select id="ma_condition">
+                    <option value=">=">股价 ≥ MA值</option>
+                    <option value="<=">股价 ≤ MA值</option>
+                </select>
+                
+                <small style="color: #666; display: block; margin-top: 5px;">筛选股价与其自身MA值关系符合条件的股票</small>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-title">MACD筛选</div>
+            <div>
+                <label for="macd_days">连续天数:</label>
+                <input type="number" id="macd_days" min="1" max="10" value="3">
+                
+                <label for="macd_direction">方向:</label>
+                <select id="macd_direction">
+                    <option value="positive">柱状图为正</option>
+                    <option value="negative">柱状图为负</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-title">布林带筛选</div>
+            <div>
+                <label for="bollinger_band">轨道:</label>
+                <select id="bollinger_band">
+                    <option value="upper">上轨</option>
+                    <option value="middle">中轨</option>
+                    <option value="lower">下轨</option>
+                </select>
+                
+                <label for="bollinger_condition">股价与布林带关系:</label>
+                <select id="bollinger_condition">
+                    <option value=">=">股价 ≥ 布林带值</option>
+                    <option value="<=">股价 ≤ 布林带值</option>
+                </select>
+                
+                <label for="bollinger_window">窗口大小:</label>
+                <input type="number" id="bollinger_window" min="10" max="50" value="20">
+                
+                <small style="color: #666; display: block; margin-top: 5px;">筛选股价与其布林带值关系符合条件的股票</small>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-title">成交量筛选</div>
+            <div>
+                <label for="volume_condition">条件:</label>
+                <select id="volume_condition">
+                    <option value=">=">大于等于</option>
+                    <option value="<=">小于等于</option>
+                </select>
+                
+                <label for="volume_value">值(手):</label>
+                <input type="number" id="volume_value" min="100" max="1000000" value="10000">
+            </div>
+        </div>
+        
+        <button id="filter_button">筛选股票</button>
+        
+        <div id="loading" style="display:none; margin-top:20px;">
+            正在筛选，请稍候...
+        </div>
+        
+        <table id="result_table">
+            <thead>
+                <tr>
+                    <th>股票代码</th>
+                    <th>股票名称</th>
+                    <th>类型</th>
+                    <th>收盘价</th>
+                    <th>成交量(手)</th>
+                </tr>
+            </thead>
+            <tbody id="result_body">
+                <!-- 结果将在这里显示 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        document.getElementById('filter_button').addEventListener('click', function() {
+            // 获取筛选条件
+            const volume_condition = document.getElementById('volume_condition').value;
+            const volume_value = parseInt(document.getElementById('volume_value').value);
+
+            const filters = {
+                stock_types: {
+                    a_share: document.getElementById('a_share').checked,
+                    hk_stock: document.getElementById('hk_stock').checked,
+                    etf: document.getElementById('etf').checked
+                },
+                ma: {
+                    ma_days: parseInt(document.getElementById('ma_days').value),
+                    condition: document.getElementById('ma_condition').value
+                },
+                macd: {
+                    consecutive_days: parseInt(document.getElementById('macd_days').value),
+                    direction: document.getElementById('macd_direction').value
+                },
+                bollinger: {
+                    band: document.getElementById('bollinger_band').value,
+                    condition: document.getElementById('bollinger_condition').value,
+                    window: parseInt(document.getElementById('bollinger_window').value)
+                },
+                volume: {
+                    condition: volume_condition,
+                    value: volume_value
+                }
+            };
+            
+            // 显示加载中
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result_body').innerHTML = '';
+            
+            // 发送请求到后端
+            fetch('/filter_stocks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(filters)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const resultBody = document.getElementById('result_body');
+                resultBody.innerHTML = ''; // Clear previous results
+                if (data.error) {
+                    alert('筛选股票时发生错误: ' + data.error);
+                    return;
+                }
+                data.forEach(stock => {
+                    const row = document.createElement('tr');
+                    
+                    const codeCell = document.createElement('td');
+                    codeCell.textContent = stock.code;
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = stock.name;
+                    
+                    const typeCell = document.createElement('td');
+                    typeCell.textContent = stock.type;
+                    
+                    const priceCell = document.createElement('td');
+                    priceCell.textContent = stock.price ? stock.price.toFixed(2) : 'N/A';
+                    
+                    const volumeCell = document.createElement('td');
+                    volumeCell.textContent = stock.volume ? stock.volume.toFixed(2) : 'N/A';
+                    
+                    row.appendChild(codeCell);
+                    row.appendChild(nameCell);
+                    row.appendChild(typeCell);
+                    row.appendChild(priceCell);
+                    row.appendChild(volumeCell);
+                    
+                    resultBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                console.error('Error:', error);
+                alert('筛选股票时发生错误: ' + error.message);
+            });
+
+        });
+    </script>
+</body>
+</html>

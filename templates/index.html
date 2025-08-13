@@ -1,0 +1,20 @@
+<html>
+<head>
+    <title>Stock Information</title>
+</head>
+<body>
+    <h1>Stock: {{ data.stock_code }}</h1>
+    <p>Latest Price: {{ data.latest_price }}</p>
+    <p>Volume: {{ data.volume }}</p>
+    <p>MA5: {{ data.ma5 }}</p>
+    <p>MA20: {{ data.ma20 }}</p>
+    <p>MA60: {{ data.ma60 }}</p>
+    <p>MACD: {{ data.macd }}</p>
+    <p>Bollinger Upper: {{ data.bollinger_upper }}</p>
+    <p>Bollinger Middle: {{ data.bollinger_middle }}</p>
+    <p>Bollinger Lower: {{ data.bollinger_lower }}</p>
+    <p>Last Trade Date: {{ data.last_trade_date }}</p>
+    <p>Current Time: {{ data.current_time }}</p>
+    <img src="data:image/png;base64,{{ data.chart_base64 }}" alt="Stock Chart">
+</body>
+</html>

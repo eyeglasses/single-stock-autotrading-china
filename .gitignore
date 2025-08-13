@@ -1,0 +1,64 @@
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 日志文件
+logs/
+*.log
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 临时文件
+*.tmp
+*.temp
+*.dmp
+
+# 图片文件（股票图表）
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# 配置文件（可能包含敏感信息）
+config.py
+config_local.py
+.env
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 虚拟环境
+venv/
+env/
+.venv/
+
+# 测试覆盖率
+.coverage
+htmlcov/
+
+# 分发/打包
+build/
+dist/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# 其他
+*.bak
+*.orig
+*.rej
